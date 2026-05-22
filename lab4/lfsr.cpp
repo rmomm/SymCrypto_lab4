@@ -1,16 +1,17 @@
 #include "lfsr.h"
 
-LFSR::LFSR(const vector<int>& initSt, const vector<int>& tapP) {
-    state = initSt;
-    taps = tapP;
+LFSR::LFSR(const vector<int>& initState, const vector<int>& tapPositions) {
+    state = initState;
+    taps = tapPositions;
 }
 
 int LFSR::step() {
     int output = state[0];
+
     int newBit = 0;
 
-    for (int t : taps) {
-        newBit ^= state[t];
+    for (int tap : taps) {
+        newBit ^= state[tap];
     }
 
     for (size_t i = 0; i < state.size() - 1; i++) {
@@ -22,18 +23,16 @@ int LFSR::step() {
     return output;
 }
 
-vector<int> LFSR::generate(int n) {
-    vector<int> r;
-    r.reserve(n);
+vector<int> LFSR::generate(int length) {
+    vector<int> sequence;
 
-    for (int i = 0; i < n; i++) {
-        r.push_back(step());
+    for (int i = 0; i < length; i++) {
+        sequence.push_back(step());
     }
 
-    return r;
+    return sequence;
 }
 
 vector<int> LFSR::getState() const {
     return state;
 }
-
