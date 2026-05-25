@@ -1,0 +1,45 @@
+===== PARAMETERS =====
+
+L1:
+N* = 222
+C = 70.509
+
+L2:
+N* = 229
+C = 72.4938
+
+===== CORRELATION ATTACK ON L1 =====
+
+Candidates found: 178
+
+Recovered L1:
+0011000111000011101100001
+Best R = 57
+
+===== CORRELATION ATTACK ON L2 =====
+
+Candidates found: 4
+
+Recovered L2:
+01110001111000101000011100
+Best R = 61
+
+===== ATTACK ON L3 =====
+
+Recovered L3:
+000000000000000000000000000
+
+===== KEY VERIFICATION =====
+Errors = 519
+FAILED
+
+===== FINAL RESULTS =====
+
+Recovered L1:
+0011000111000011101100001
+
+Recovered L2:
+01110001111000101000011100
+
+Recovered L3:
+000000000000000000000000000
