@@ -9,6 +9,7 @@
 
 using namespace std;
 
+
 string loadSequence(const string& filename) {
     ifstream f(filename);
     string s;
@@ -27,8 +28,7 @@ vector<int> toBits(const string& s) {
 }
 
 
-
-void printState(ostream& out, const vector<int>& state) {
+void printState(ostream& out, const vector<int>& state){
     for (int b : state) {
         out << b;
     }
@@ -38,19 +38,17 @@ void printState(ostream& out, const vector<int>& state) {
 
 
 double calcC(int N) {
-    double p = 0.75;
+    double p1 = 0.25;
     double t = 2.33;
 
-    return N * p - t * sqrt(N * p * (1.0 - p));
+    return N * p1 + t * sqrt(N * p1 * (1.0 - p1));
 }
 
 
 double calcBeta(int N, double C) {
-    double p = 0.5;
-
-    double t = (N * p - C) /sqrt(N * p * (1.0 - p));
-    double beta = 0.5 * erfc(t / sqrt(2.0));
-
+    double p2 = 0.5;
+    double t = (N * p2 - C) / sqrt(N * p2 * (1.0 - p2));
+    double beta =0.5 * erfc(t / sqrt(2.0));
     return beta;
 }
 
@@ -76,17 +74,17 @@ int computeR(const vector<int>& a, const vector<int>& b) {
     int R = 0;
 
     for (int i = 0; i < (int)a.size(); i++) {
-        R += (a[i] == b[i]);
+        R += (a[i] ^ b[i]);
     }
 
     return R;
 }
 
 
-vector<int> attackL1(const vector<int>& z, int N, double C, ostream& out,  ostream& candOut) {
-    vector<int> taps = { 0,3 };
+vector<int> attackL1(const vector<int>& z,  int N, double C, ostream& out, ostream& candOut) {
+    vector<int> taps = { 0, 3};
 
-    int bestR = -1;
+    int bestR = N + 1;
 
     vector<int> bestState;
 
@@ -96,11 +94,11 @@ vector<int> attackL1(const vector<int>& z, int N, double C, ostream& out,  ostre
 
     cout << "\nSearching L1...\n";
 
-    for (unsigned int mask = 1;mask < (1u << 20); mask++) {
+    for (int mask = 1; mask < (1 << 20); mask++) {
         vector<int> state(25);
 
-        for (int i = 0; i < 25; i++){
-            state[24 - i] = (mask >> i) & 1;
+        for (int i = 0; i < 25; i++) {
+            state[24 - i] =  (mask >> i) & 1;
         }
 
         LFSR reg(state, taps);
@@ -109,25 +107,25 @@ vector<int> attackL1(const vector<int>& z, int N, double C, ostream& out,  ostre
 
         int R = computeR(x, z);
 
-        if (R > C) {
+        if (R < C) {
             candidates++;
             candOut << "L1 candidate:\n";
 
             printState(candOut, state);
 
-            candOut << "R = "  << R << "\n\n";
+            candOut << "R = " << R  << "\n\n";
         }
 
-        if (R > bestR) {
+        if (R < bestR) {
             bestR = R;
 
             bestState = state;
 
-            cout << "L1 best R = " << bestR << endl;
+            cout << "L1 new best R = "  << bestR   << endl;
         }
     }
 
-    out << "\nCandidates found: "  << candidates << endl;
+    out << "\nCandidates found: "  << candidates  << endl;
 
     out << "\nRecovered L1:\n";
 
@@ -139,10 +137,10 @@ vector<int> attackL1(const vector<int>& z, int N, double C, ostream& out,  ostre
 }
 
 
-vector<int> attackL2(const vector<int>& z, int N, double C, ostream& out, ostream& candOut) {
-    vector<int> taps = { 0,1,2,6 };
+vector<int> attackL2(const vector<int>& z,  int N, double C,  ostream& out,  ostream& candOut) {
+    vector<int> taps = { 0, 1, 2, 6};
 
-    int bestR = -1;
+    int bestR = N + 1;
 
     vector<int> bestState;
 
@@ -152,38 +150,39 @@ vector<int> attackL2(const vector<int>& z, int N, double C, ostream& out, ostrea
 
     cout << "\nSearching L2...\n";
 
-    for (unsigned long long mask = 1; mask < (1ULL << 20); mask++) {
+    for (int mask = 1;  mask < (1 << 20); mask++) {
         vector<int> state(26);
 
-        for (int i = 0; i < 26;  i++) {
+        for (int i = 0; i < 26; i++) {
             state[25 - i] = (mask >> i) & 1;
         }
 
         LFSR reg(state, taps);
 
-        vector<int> y =  reg.generate(N);
+        vector<int> y = reg.generate(N);
+
         int R = computeR(y, z);
 
-        if (R > C) {
+        if (R < C) {
             candidates++;
 
             candOut << "L2 candidate:\n";
 
             printState(candOut, state);
 
-            candOut << "R = "  << R << "\n\n";
+            candOut << "R = " << R << "\n\n";
         }
 
-        if (R > bestR) {
+        if (R < bestR) {
             bestR = R;
 
             bestState = state;
 
-            cout << "L2 best R = "  << bestR  << endl;
+            cout << "L2 new best R = " << bestR << endl;
         }
     }
 
-    out << "\nCandidates found: "  << candidates << endl;
+    out << "\nCandidates found: " << candidates << endl;
 
     out << "\nRecovered L2:\n";
 
@@ -215,11 +214,11 @@ vector<int> attackL3(const vector<int>& z, const vector<int>& x, const vector<in
 
         LFSR reg(state, taps);
 
-        vector<int> s =  reg.generate(N);
+        vector<int> s = reg.generate(N);
 
         int matches = 0;
 
-        for (int i = 0; i < N;  i++) {
+        for (int i = 0; i < N; i++) {
             if (x[i] != y[i]) {
                 if (s[i] == 1 && z[i] == x[i]) {
                     matches++;
@@ -236,7 +235,7 @@ vector<int> attackL3(const vector<int>& z, const vector<int>& x, const vector<in
 
             bestState = state;
 
-            cout << "L3 best matches = "  << bestMatches << endl;
+            cout << "L3 best matches = " << bestMatches << endl;
         }
     }
 
@@ -249,13 +248,15 @@ vector<int> attackL3(const vector<int>& z, const vector<int>& x, const vector<in
     return bestState;
 }
 
-void verifyKey(const vector<int>& L1state, const vector<int>& L2state,  const vector<int>& L3state, const vector<int>& z, int N, ostream& out) {
+
+void verifyKey(const vector<int>& L1state, const vector<int>& L2state, const vector<int>& L3state, const vector<int>& z, int N,  ostream& out) {
     LFSR l1(L1state, { 0,3 });
     LFSR l2(L2state, { 0,1,2,6 });
-    LFSR l3(L3state, { 0,1,2,5 });
+    LFSR l3( L3state, { 0,1,2,5 });
+
     Geffe geffe(l1, l2, l3);
 
-    vector<int> generated =  geffe.generate(N);
+    vector<int> generated = geffe.generate(N);
 
     int errors = 0;
 
@@ -267,9 +268,9 @@ void verifyKey(const vector<int>& L1state, const vector<int>& L2state,  const ve
 
     out << "\n===== KEY VERIFICATION =====\n";
 
-    out << "Errors = " << errors  << endl;
+    out << "Errors = " << errors << endl;
 
-    if (errors == 0){
+    if (errors == 0) {
         out << "SUCCESS\n";
     }
     else {
@@ -283,61 +284,74 @@ int main() {
 
     ofstream candOut("candidates.txt");
 
-
     string s = loadSequence("v12.txt");
 
     vector<int> z = toBits(s);
 
 
-    int N1 =calcNstar(25);
-    int N2 = calcNstar(26);
+    int l1 = 25;
+    int l2 = 26;
+    int N1 = calcNstar(l1);
+    int N2 = calcNstar(l2);
     double C1 = calcC(N1);
-    double C2 =calcC(N2);
+    double C2 = calcC(N2);
 
-    vector<int> z1( z.begin(),z.begin() + N1);
+    vector<int> z1(z.begin(), z.begin() + N1);
     vector<int> z2(z.begin(), z.begin() + N2);
 
 
-    out << "===== PARAMETERS =====\n";
+    cout << "Loaded sequence length: "<< z.size()<< endl;
+
+    cout << "\nL1:\n";
+    cout << "N* = " << N1 << endl;
+    cout << "C = " << C1 << endl;
+    cout << "\nL2:\n";
+    cout << "N* = " << N2 << endl;
+    cout << "C = " << C2 << endl;
+
+    out << "\n===== SEQUENCE z =====\n";
+
+    for (int b : z) {
+        out << b;
+    }
+
+    out << endl;
+
+    out << "\n===== PARAMETERS N* AND C =====\n";
+
     out << "\nL1:\n";
-    out << "N* = " << N1 << endl;
-    out << "C = "<< C1 << endl;
-
+    out << "N* = " << N1  << endl;
+    out << "C = " << C1  << endl;
     out << "\nL2:\n";
-    out << "N* = "  << N2  << endl;
-    out << "C = " << C2 << endl;
+    out << "N* = " << N2 << endl;
+    out << "C = "   << C2  << endl;
 
+    vector<int> bestL1 = attackL1(z1, N1, C1, out, candOut);
+    vector<int> bestL2 = attackL2(z2, N2, C2, out, candOut);
 
-    vector<int> bestL1 = attackL1( z1, N1, C1, out, candOut);
+    int N3 = min(N1, N2);
 
-    vector<int> bestL2 = attackL2( z2,  N2, C2, out, candOut);
-    int N = min(N1, N2);
+    LFSR reg1( bestL1, { 0,3 });
+    LFSR reg2( bestL2, { 0,1,2,6 });
 
-    vector<int> zPart( z.begin(), z.begin() + N);
+    vector<int> x = reg1.generate(N3);
+    vector<int> y = reg2.generate(N3);
+    vector<int> z3(z.begin(), z.begin() + N3);
 
+    vector<int> bestL3 = attackL3( z3, x, y, N3, out);
 
-    LFSR reg1(bestL1, { 0,3 });
-    LFSR reg2(bestL2, { 0,1,2,6 });
-
-    vector<int> x = reg1.generate(N);
-    vector<int> y = reg2.generate(N);
-    vector<int> bestL3 = attackL3(zPart, x, y, N, out);
-    verifyKey(bestL1, bestL2,bestL3,zPart,N,out);
-
+    verifyKey(bestL1, bestL2, bestL3, z3, N3, out);
 
     out << "\n===== FINAL RESULTS =====\n";
-
     out << "\nRecovered L1:\n";
-
     printState(out, bestL1);
-
     out << "\nRecovered L2:\n";
-
     printState(out, bestL2);
-
     out << "\nRecovered L3:\n";
-
     printState(out, bestL3);
+
+    out.close();
+    candOut.close();
 
     return 0;
 }
