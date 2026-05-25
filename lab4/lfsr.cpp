@@ -1,38 +1,36 @@
 #include "lfsr.h"
 
-LFSR::LFSR(const vector<int>& initState, const vector<int>& tapPositions) {
-    state = initState;
-    taps = tapPositions;
+LFSR::LFSR(uint32_t rec, uint8_t deg){
+    recurrence = rec;
+    degree = deg;
 }
 
-int LFSR::step() {
-    int output = state[0];
+vector<uint8_t> LFSR::gen(uint32_t f, uint32_t length) {
+    vector<uint8_t> seq;
 
-    int newBit = 0;
+    seq.reserve(length);
 
-    for (int tap : taps) {
-        newBit ^= state[tap];
+    uint32_t reg = f;
+
+    for (uint32_t i = 0; i < length; i++) {
+        uint8_t outBit = reg & 1;
+
+        seq.push_back(outBit);
+
+        uint8_t newBit = 0;
+
+        uint32_t temp =
+            reg & recurrence;
+
+        while (temp) {
+            newBit ^= (temp & 1);
+            temp >>= 1;
+        }
+
+        reg >>= 1;
+
+        reg |= (uint32_t(newBit)  << (degree - 1));
     }
 
-    for (size_t i = 0; i < state.size() - 1; i++) {
-        state[i] = state[i + 1];
-    }
-
-    state[state.size() - 1] = newBit;
-
-    return output;
-}
-
-vector<int> LFSR::generate(int length) {
-    vector<int> sequence;
-
-    for (int i = 0; i < length; i++) {
-        sequence.push_back(step());
-    }
-
-    return sequence;
-}
-
-vector<int> LFSR::getState() const {
-    return state;
+    return seq;
 }

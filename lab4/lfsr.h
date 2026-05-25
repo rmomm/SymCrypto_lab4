@@ -1,18 +1,18 @@
 #pragma once
+
 #include <vector>
+#include <cstdint>
 
 using namespace std;
 
 class LFSR {
 private:
-    vector<int> state;
-    vector<int> taps;
+
+    uint32_t recurrence;
+    uint8_t degree;
 
 public:
-    LFSR(const vector<int>& initState, const vector<int>& tapPositions);
 
-    int step();
-
-    vector<int> generate(int length);
-    vector<int> getState() const;
+    LFSR(uint32_t rec, uint8_t deg);
+    vector<uint8_t> gen(uint32_t f, uint32_t length);
 };
